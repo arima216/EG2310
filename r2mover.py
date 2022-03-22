@@ -60,7 +60,7 @@ class AutoNav(Node):
         self.pitch = 0
         self.yaw = 0
         
-        # create subscription to track occupancy
+        # create subscription to track occupancy 
         self.occ_subscription = self.create_subscription(
             OccupancyGrid,
             'map',
@@ -79,9 +79,8 @@ class AutoNav(Node):
         self.laser_range = np.array([])
 
         self.rot_angle = 0
-
-
-    def odom_callback(self, msg):
+        
+     def odom_callback(self, msg):
         # self.get_logger().info('In odom_callback')
         orientation_quat =  msg.pose.pose.orientation
         self.roll, self.pitch, self.yaw = euler_from_quaternion(orientation_quat.x, orientation_quat.y, orientation_quat.z, orientation_quat.w)
@@ -154,11 +153,10 @@ class AutoNav(Node):
             self.rotatebot(self, self.rot_angle)
 
 
-def main(args=None):
-    rclpy.init(args=args)
-
-    auto_nav = AutoNav()
-    auto_nav.mover()
+    def main(args=None):
+        rclpy.init(args=args)
+        auto_nav = AutoNav()
+        auto_nav.mover()
 
     # create matplotlib figure
     # plt.ion()
