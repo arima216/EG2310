@@ -29,7 +29,7 @@ rotatechange = 0.1
 speedchange = 0.05
 occ_bins = [-1, 0, 100, 101]
 stop_distance = 0.15
-turtlebot_speed=999
+turtlebot_speed=0.1
 front_angle = 30
 front_angles = range(-front_angle,front_angle+1,1)
 scanfile = 'lidar.txt'
@@ -80,7 +80,7 @@ class AutoNav(Node):
 
         self.rot_angle = 0
         
-     def odom_callback(self, msg):
+    def odom_callback(self, msg):
         # self.get_logger().info('In odom_callback')
         orientation_quat =  msg.pose.pose.orientation
         self.roll, self.pitch, self.yaw = euler_from_quaternion(orientation_quat.x, orientation_quat.y, orientation_quat.z, orientation_quat.w)
@@ -116,21 +116,24 @@ class AutoNav(Node):
         self.laser_range[self.laser_range==0] = np.nan
 
     def compute(self):
-    	if self.laser_range[front_angles]>float(stop_distance):
-           self.rot_angle = (self.laser_range[90]-float(stop_distance))*math.pi/float(stop_distance)
-        else:
-           self.rot_angle = math.pi/2
+        
+    	if self.laser_range.size != 0:
+            lri = (self.laser_range[front_angles]<float(stop_distance)).nonzero()
+            # use nanargmax as there are nan's in laser_range added to replace 0's
+            if len(lri[0])>0:
+                self.rot_angle = (self.laser_range[90]-float(stop_distance))*math.pi/float(stop_distance)
+            else:
+                self.rot_angle = math.pi/2
        	 
     def rotatebot(self, rot_angle):
         # self.get_logger().info('In rotatebot')
         # create Twist object
-        twist = Twist()
       
         # start moving
         self.get_logger().info('Start moving')
         twist = Twist()
-        twist.linear.x = turtlebot_speed
-        twist.angular.z = rot_angle/5
+        twist.linear.x = float(turtlebot_speed)
+        twist.angular.z = float(self.rot_angle)
         # not sure if this is really necessary, but things seem to work more
         # reliably with this
         time.sleep(1)
@@ -149,14 +152,13 @@ class AutoNav(Node):
 
     def mover(self):
         while True:
-            self.compute();
-            self.rotatebot(self, self.rot_angle)
+            self.rotatebot(self.rot_angle)
 
 
-    def main(args=None):
-        rclpy.init(args=args)
-        auto_nav = AutoNav()
-        auto_nav.mover()
+def main(args=None):
+    rclpy.init(args=args)
+    auto_nav = AutoNav()
+    auto_nav.mover()
 
     # create matplotlib figure
     # plt.ion()
@@ -171,3 +173,5 @@ class AutoNav(Node):
 
 if __name__ == '__main__':
     main()
+
+
