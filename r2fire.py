@@ -11,7 +11,7 @@ import time
 #import board
 #import #Thermo sensor
 import RPi.GPIO as GPIO
-
+GPIO.setmode(GPIO.BCM)
 #setup servo and dc pins
 servo_pin = 15
 DC_pin1 = 23
