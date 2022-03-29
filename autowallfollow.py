@@ -31,8 +31,11 @@ occ_bins = [-1, 0, 100, 101]
 stop_distance = 0.25
 front_angle = 30
 front_angles = range(-front_angle,front_angle+1,1)
+left_angle = -60
+right_angle = 120
 scanfile = 'lidar.txt'
 mapfile = 'map.txt'
+state_ = 0
 
 # code from https://automaticaddison.com/how-to-convert-a-quaternion-into-euler-angles-in-python/
 def euler_from_quaternion(x, y, z, w):
@@ -135,49 +138,41 @@ class AutoNav(Node):
         self.laser_range = np.array(msg.ranges)
         # print to file
         # np.savetxt(scanfile, self.laser_range)
-        section = {
-        'front': min(laser_range[70:110]),
-        'left': min(laser_range[0:40]),
-        'right': min(laser_range[140:180]),
-    }
         # replace 0's with nan
         self.laser_range[self.laser_range==0] = np.nan
 
-        bug_action(self)
+        self.bug_action()
 
-    def change_state(state):
-        global state_, state_dict_
+    def change_state(self,state):
+        global state_
         if state is not state_:
-            print('State of Bot - [%s] - %s' % (state, state_dict_[state]))
+            print('State of Bot - %s' % (state))
             state_ = state
     
-    def bug_action():
+    def bug_action(self):
         global follow_dir
 
         b = 1  # maximum threshold distance
         a = 0.5  # minimum threshold distance
         twist = Twist()  # Odometry call for velocity
-        linear_x = 0  # Odometry message for linear velocity will be called here.
-        angular_z = 0  # Odometry message for angular velocity will be called here.
+        linear_x = 0.0  # Odometry message for linear velocity will be called here.
+        angular_z = 0.0  # Odometry message for angular velocity will be called here.
 
-        rospy.loginfo("follow_direction {f}".format(f=follow_dir))  # This will indicate the direction of wall to follow.
-
-        if section['front'] > b and section['left'] > b:  # Loop 1
-            change_state(0)
-            rospy.loginfo("Reset Follow_dir")
-        elif section['left'] > b and section['front'] > a:
-            change_state(4)
-        elif section['left'] < b and section['front'] > a:
-            change_state(2)
-        elif section['left'] < b and section['front'] < a:
-            change_state(3)
+        if  np.nan_to_num(self.laser_range[left_angle], copy=False, nan=100) > b and np.nan_to_num(self.laser_range[front_angle], copy=False, nan=100)  > b:  # Loop 1
+            self.change_state(0)
+        elif np.nan_to_num(self.laser_range[left_angle], copy=False, nan=100)  > b and np.nan_to_num(self.laser_range[front_angle], copy=False, nan=100)  > a:
+            self.change_state(4)
+        elif np.nan_to_num(self.laser_range[left_angle], copy=False, nan=100)  and np.nan_to_num(self.laser_range[front_angle], copy=False, nan=100)  > a:
+            self.change_state(2)
+        elif np.nan_to_num(self.laser_range[left_angle], copy=False, nan=100)  and np.nan_to_num(self.laser_range[front_angle], copy=False, nan=100)  < a:
+            self.change_state(3)
         else:
-            rospy.loginfo("follow left wall is not running")
+            print('Error')
 
-    def find_wall():
+    def find_wall(self):
         twist = Twist()
         twist.linear.x = 0.3
-        twist.angular.z = 0
+        twist.angular.z = 0.0
         return twist
 
 
@@ -186,9 +181,9 @@ class AutoNav(Node):
     '''
 
 
-    def turn_left():
+    def turn_left(self):
         twist = Twist()
-        twist.linear.x = 0
+        twist.linear.x = 0.0
         twist.angular.z = 0.3
         return twist
 
@@ -198,9 +193,9 @@ class AutoNav(Node):
     '''
 
 
-    def turn_right():
+    def turn_right(self):
         twist = Twist()
-        twist.linear.x = 0
+        twist.linear.x = 0.0
         twist.angular.z = -0.3
         return twist
 
@@ -210,10 +205,10 @@ class AutoNav(Node):
     '''
 
 
-    def move_ahead():
+    def move_ahead(self):
         twist = Twist()
         twist.linear.x = 0.3
-        twist.angular.z = 0
+        twist.angular.z = 0.0
         return twist
 
 
@@ -222,7 +217,7 @@ class AutoNav(Node):
     '''
 
 
-    def move_diag_right():
+    def move_diag_right(self):
         twist = Twist()
         twist.linear.x = 0.1
         twist.angular.z = -0.3
@@ -234,7 +229,7 @@ class AutoNav(Node):
     '''
 
 
-    def move_diag_left():
+    def move_diag_left(self):
         twist = Twist()
         twist.linear.x = 0.1
         twist.angular.z = 0.3
@@ -248,17 +243,17 @@ class AutoNav(Node):
 
                 twist = Twist()
                 if state_ == 0:
-                    twist = find_wall()
+                    twist = self.find_wall()
                 elif state_ == 1:
-                    twist = turn_right()
+                    twist = self.turn_right()
                 elif state_ == 2:
-                    twist = move_ahead()
+                    twist = self.move_ahead()
                 elif state_ == 3:
-                    twist = turn_left()
+                    twist = self.turn_left()
                 elif state_ == 4:
-                    twist = move_diag_right()
+                    twist = self.move_diag_right()
                 elif state_ == 5:
-                    twist = move_diag_left()
+                    twist = self.move_diag_left()
                 else:
                     print("Unknown!")
                     
