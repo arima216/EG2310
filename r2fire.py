@@ -17,54 +17,35 @@ servo_pin = 15
 DC_pin1 = 23
 DC_pin2 = 24
 
-class FireBall(Node):
-    def dc_start(self):
+    def dc_start():
     	# setup dc motors
-    	GPIO.setup(DC_pin1, GPIO.OUT)
-    	GPIO.setup(DC_pin2, GPIO.OUT)
-    	pwm1 = GPIO.PWM(DC_pin1, 100)
-    	pwm1.start(0)
-    	pwm2 = GPIO.PWM(DC_pin2, 100)
-    	pwm2.start(0)
-    	time.sleep(5)
-    	
-    	GPIO.output(DC_pin1, True)
-    	GPIO.output(DC_pin1, True)
-    	pwm1.ChangeDutyCycle(80)
-    	pwm2.ChangeDutyCycle(80)
-    	time.sleep(5)
-    
-    def release(self):
-        # setup servo
-        for i in range(3):
-        
-            GPIO.setup(servo_pin, GPIO.OUT)
-            p = GPIO.PWM(servo_pin, 50)
-            p.start(2.5)
+        GPIO.output(DC_pin1, GPIO.HIGH)
+        GPIO.output(DC_pin2, GPIO.HIGH)
+            
 
-            degree = 20
-
-            servo_value = degree/90 * 5 + 2.5
-            p.ChangeDutyCle(servo_value)
-            time.sleep(1)
+    def release():
+        p = GPIO.PWM(servo_pin, 50)
+# Set servo to 90 degrees as it's starting position 
+        p.start(7.5)
+        p.ChangeDutyCycle(2.5) #loading position 
+        time.sleep(0.1) #delay .1 second 
+        p.ChangeDutyCycle(9.5) #firing position 
+        time.sleep(1) #delay 1 second again
+        p.ChangeDutyCycle(7.5) #resting position 
+        time.sleep(1)
         
-            degree = -20
-        
-            servo_value = degree/90 * 5 + 2.5
-            p.ChangeDutyCle(servo_value)
-            print(i)
-            time.sleep(2)
-        
-    def shoot(self):
+    def shoot():
         #if correct_aim = True
         self.dc_start()
-        self.release()
+        for i in range (3)
+            self.release()
+        time.sleep(10)
         
-def main(args=None):
-    rclpy.init(args=args)
-    
-    fire = FireBall()
-    fire.shoot()
-    
-if __name__ == '__main__':
-    main()
+try:
+    while True:
+        shoot()
+except KeyboardInterrupt:
+    p.stop()
+    GPIO.output(DC_pin1, GPIO.LOW)
+    GPIO.output(DC_pin2, GPIO.LOW)
+    GPIO.cleanup()
