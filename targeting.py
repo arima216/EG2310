@@ -98,7 +98,6 @@ class ThermalCamera(Node):
         # ----------------------------------------------------------- #
 
         # Centre the target in the robot's vision
-        GPIO.setmode(GPIO.BCM)
         horizontally_centered = False
         centered = False
 
@@ -161,35 +160,35 @@ class ThermalCamera(Node):
         # ----------------------------- #
         # Now the bot can fire the ball #
         # ----------------------------- #
+        GPIO.setmode(GPIO.BCM)
 
-        # setup dc motors
-    	GPIO.output(DC_pin1, GPIO.HIGH）
+
+        # Set the pin as an output 
+        GPIO.setup(DC_pin1, GPIO.OUT)
+        GPIO.setup(DC_pin2, GPIO.OUT)
+
+        GPIO.output(DC_pin1, GPIO.HIGH)
         GPIO.output(DC_pin2, GPIO.HIGH)
 
-        for i in range(3):
-        
-            p = GPIO.PWM(servo_pin, 50)
-            # Set servo to 90 degrees as it's starting position 
-            p.start(7.5)
-            p.ChangeDutyCycle(2.5) #loading position 
-            time.sleep(0.1) #delay .1 second 
-            p.ChangeDutyCycle(9.5) #firing position 
-            time.sleep(1) #delay 1 second again
-            p.ChangeDutyCycle(7.5) #resting position 
-            time.sleep(1)
+        # Set the pin as an output 
+        GPIO.setup(servo_pin, GPIO.OUT)
+        # Initialise the servo to be controlled by pwm with 50 Hz frequency 
+        p = GPIO.PWM(servo_pin, 50)
+        # Set servo to 90 degrees as it's starting position 
+        p.start(7.5)
+        p.ChangeDutyCycle(2.5) #loading position 
+        time.sleep(0.1) #delay .1 second 
+        p.ChangeDutyCycle(9.5) #firing position
+        time.sleep(1) #delay 1 second again
+        p.ChangeDutyCycle(7.5) #resting position 
+        time.sleep(1)
 
-        # -------------- #
-        # Do the cleanup #
-        # -------------- #
-        # Send message that the target has finished shooting
-        message_sent = 'Done'
-        self.timer_callback()
 
-        # Stop the DC Motor
-        p.stop()
-        GPIO.output(DC_pin1, GPIO.LOW)
-        GPIO.output(DC_pin2, GPIO.LOW)
-        GPIO.cleanup()
+        except KeyboardInterrupt: 
+            GPIO.output(motorL_pin, GPIO.LOW)
+            GPIO.output(motorR_pin, GPIO.LOW)
+            p.stop()
+            GPIO.cleanup()
 
 
 def main(args=None):
