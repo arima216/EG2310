@@ -17,6 +17,10 @@ rotatechange = 0.1
 speedchange = 0.05
 detecting_threshold = 32.0
 firing_threshold = 35.0
+#setup servo and dc pins
+servo_pin = 15
+DC_pin1 = 23
+DC_pin2 = 24
 
 message_sent = 'Not Detected'
 
@@ -138,7 +142,7 @@ class ThermalCamera(Node):
                 centered = True
                 twist = Twist()
                 twist.linear.x = 0.0
-                twist.angular.z = 90
+                twist.angular.z = -90
                 time.sleep(1)
                 self.publisher_.publish(twist)
                 time.sleep(1)
@@ -158,54 +162,21 @@ class ThermalCamera(Node):
         # Now the bot can fire the ball #
         # ----------------------------- #
 
-        GPIO.setmode(GPIO.BCM)
+        # setup dc motors
+    	GPIO.output(DC_pin1, GPIO.HIGH）
+        GPIO.output(DC_pin2, GPIO.HIGH)
 
-        # 11 , 13 Input 1,2
-        GPIO.setup(17, GPIO.OUT)
-        GPIO.setup(27, GPIO.OUT)
-        self.get_logger().info("Setup the DC")
-
-        # 12 Enable
-        GPIO.setup(18, GPIO.OUT)
-        pwm = GPIO.PWM(18, 100)
-        pwm.start(0)
-        time.sleep(5)
-
-        # Spin Backwards Continuously
-        GPIO.output(17, True)
-        GPIO.output(27, False)
-        pwm.ChangeDutyCycle(75)
-        GPIO.output(18, True)
-        self.get_logger().info("Start the DC")
-
-        # Start the Stepper Motor 2 seconds later
-
-        # Wait for 2 seconds
-        time.sleep(5)
-
-        # Set up the Stepper Pins
-        control_pins = [26, 19, 13, 6]
-        for pin in control_pins:
-            GPIO.setup(pin, GPIO.OUT)
-            GPIO.output(pin, 0)
-
-        halfstep_seq = [
-            [1, 0, 0, 0],
-            [1, 1, 0, 0],
-            [0, 1, 0, 0],
-            [0, 1, 1, 0],
-            [0, 0, 1, 0],
-            [0, 0, 1, 1],
-            [0, 0, 0, 1],
-            [1, 0, 0, 1]]
-
-        self.get_logger().info("Started the Stepper")
-        # Start Spinning the Stepper
-        for i in range(512):
-            for halfstep in range(8):
-                for pin in range(4):
-                    GPIO.output(control_pins[pin], halfstep_seq[halfstep][pin])
-                time.sleep(0.001)
+        for i in range(3):
+        
+            p = GPIO.PWM(servo_pin, 50)
+            # Set servo to 90 degrees as it's starting position 
+            p.start(7.5)
+            p.ChangeDutyCycle(2.5) #loading position 
+            time.sleep(0.1) #delay .1 second 
+            p.ChangeDutyCycle(9.5) #firing position 
+            time.sleep(1) #delay 1 second again
+            p.ChangeDutyCycle(7.5) #resting position 
+            time.sleep(1)
 
         # -------------- #
         # Do the cleanup #
@@ -215,13 +186,10 @@ class ThermalCamera(Node):
         self.timer_callback()
 
         # Stop the DC Motor
-        GPIO.output(18, False)
-        pwm.stop()
-        self.get_logger().info("Stopped the DC Motor")
-
-        # Cleanup all GPIO
+        p.stop()
+        GPIO.output(DC_pin1, GPIO.LOW)
+        GPIO.output(DC_pin2, GPIO.LOW)
         GPIO.cleanup()
-        self.get_logger().info("Cleaned up GPIO")
 
 
 def main(args=None):
