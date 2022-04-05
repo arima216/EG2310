@@ -184,11 +184,10 @@ class ThermalCamera(Node):
         time.sleep(1)
 
 
-        except KeyboardInterrupt: 
-            GPIO.output(motorL_pin, GPIO.LOW)
-            GPIO.output(motorR_pin, GPIO.LOW)
-            p.stop()
-            GPIO.cleanup()
+        GPIO.output(motorL_pin, GPIO.LOW)
+        GPIO.output(motorR_pin, GPIO.LOW)
+        p.stop()
+        GPIO.cleanup()
 
 
 def main(args=None):
