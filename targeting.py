@@ -9,7 +9,7 @@ from std_msgs.msg import Int8, Bool, String
 import time
 import busio
 import board
-import adafruit_amg88xx
+import adafruit_amg8833
 import RPi.GPIO as GPIO
 
 # constants
