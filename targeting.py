@@ -15,7 +15,7 @@ import RPi.GPIO as GPIO
 # constants
 rotatechange = 0.1
 speedchange = 0.05
-detecting_threshold = 32.0
+detecting_threshold = 40.0
 firing_threshold = 35.0
 #setup servo and dc pins
 servo_pin = 15
