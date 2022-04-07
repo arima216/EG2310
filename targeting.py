@@ -187,7 +187,9 @@ class ThermalCamera(Node):
         p.ChangeDutyCycle(7.5) #resting position 
         time.sleep(1)
 
-
+        message_sent = 'Done'
+        self.timer_callback()
+        
         GPIO.output(motorL_pin, GPIO.LOW)
         GPIO.output(motorR_pin, GPIO.LOW)
         p.stop()
