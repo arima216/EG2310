@@ -141,10 +141,10 @@ class ThermalCamera(Node):
                 centered = True
                 twist = Twist()
                 twist.linear.x = 0.0
-                twist.angular.z = -90
+                twist.angular.z = 0.2
                 time.sleep(1)
                 self.publisher_.publish(twist)
-                time.sleep(1)
+                time.sleep(4)
             return True
 
 
