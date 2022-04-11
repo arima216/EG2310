@@ -27,10 +27,12 @@ import cv2
 import math
 import cmath
 import time
+import threading
+import sched
 
 # constants
-rotatechange = 0.3
-speedchange = 0.06
+rotatechange = 0.5
+speedchange = 0.15
 back_angles = range(200, 320 + 1, 1)
 
 scanfile = 'lidar.txt'
@@ -137,6 +139,14 @@ class AutoNav(Node):
         self.tfBuffer = tf2_ros.Buffer()
         self.tfListener = tf2_ros.TransformListener(self.tfBuffer, self)
 
+        self.nfc_subscription = self.create_subscription(
+            String,
+            'nfc',
+            self.nfc_callback,
+            10
+        )
+
+
     def state_estimate_callback(self, msg):
         """
         Extract the position and orientation data.
@@ -177,11 +187,11 @@ class AutoNav(Node):
         # create numpy array
         msgdata = np.array(msg.data)
         # compute histogram to identify percent of bins with -1
-        # occ_counts = np.histogram(msgdata,occ_bins)
+        #occ_counts = np.histogram(msgdata,occ_bins)
         # calculate total number of bins
-        # total_bins = msg.info.width * msg.info.height
+        #total_bins = msg.info.width * msg.info.height
         # log the info
-        # self.get_logger().info('Unmapped: %i Unoccupied: %i Occupied: %i Total: %i' % (occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins))
+        #self.get_logger().info('Unmapped: %i Unoccupied: %i Occupied: %i Total: %i' % (occ_counts[0][0], occ_counts[0][1], occ_counts[0][2], total_bins))
 
         # make msgdata go from 0 instead of -1, reshape into 2D
         oc2 = msgdata + 1
@@ -208,6 +218,13 @@ class AutoNav(Node):
         self.laser_range[self.laser_range == 0] = np.nan
 
     # function to rotate the TurtleBot
+
+    def nfc_callback(self, msg):
+        if self.closure == False:
+            self.stopbot()
+            time.sleep(30)
+        else:
+            return
 
     def rotatebot(self, rot_angle):
         # self.get_logger().info('In rotatebot')
@@ -277,12 +294,12 @@ class AutoNav(Node):
         # Logic for following the wall
         # >d means no wall detected by that laser beam
         # <d means a wall was detected by that laser beam
-        d = 0.28  # wall distance from the robot. It will follow the right wall and maintain this distance
+        d = 0.45  # wall distance from the robot. It will follow the right wall and maintain this distance
         # Set turning speeds (to the left) in rad/s
 
         # These values were determined by trial and error.
-        self.turning_speed_wf_fast = 0.75  # Fast turn ideal = 1.0
-        self.turning_speed_wf_slow = 0.40  # Slow turn = 0.50
+        self.turning_speed_wf_fast = 1.3  # Fast turn ideal = 1.0
+        self.turning_speed_wf_slow = 0.50  # Slow turn = 0.50
         # Set movement speed
         self.forward_speed = speedchange
         # Set up twist message as msg
@@ -533,3 +550,12 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#Phase 1
+#First scan
+
+#def Phase1():
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
