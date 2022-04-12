@@ -92,115 +92,115 @@ class ThermalCamera(Node):
 
         return True
 
-    def centre_target(self):
+    #def centre_target(self):
         # ----------------------------------------------------------- #
         # Adjust the servo and robot until high temp is in the centre #
         # ----------------------------------------------------------- #
 
         # Centre the target in the robot's vision
-        horizontally_centered = False
-        centered = False
+        #horizontally_centered = False
+        #centered = False
 
-        while not centered:
-            screen = amg.pixels
-            max_row = 0
-            max_column = 0
-            max_value = 0.0
-            for row in range(len(screen)):
-                for column in range(len(screen[row])):
-                    current_value = screen[row][column]
-                    if current_value > max_value:
-                        max_row = row
-                        max_column = column
-                        max_value = current_value
+        #while not centered:
+            #screen = amg.pixels
+            #max_row = 0
+            #max_column = 0
+            #max_value = 0.0
+            #for row in range(len(screen)):
+                #for column in range(len(screen[row])):
+                    #current_value = screen[row][column]
+                    #if current_value > max_value:
+                        #max_row = row
+                        #max_column = column
+                        #max_value = current_value
 
-            if not horizontally_centered:
+            #if not horizontally_centered:
                 # centre max value between row 3 and 4
-                if max_column < 3:
+                #if max_column < 3:
                     # spin it anti-clockwise
-                    twist = Twist()
-                    twist.linear.x = 0.0
-                    twist.angular.z = rotatechange
-                    time.sleep(1)
-                    self.publisher_.publish(twist)
-                    time.sleep(1)
-                elif max_column > 4:
+                    #twist = Twist()
+                    #twist.linear.x = 0.0
+                    #twist.angular.z = rotatechange
+                    #time.sleep(1)
+                    #self.publisher_.publish(twist)
+                    #time.sleep(1)
+                #elif max_column > 4:
                     # spin it clockwise
-                    twist = Twist()
-                    twist.linear.x = 0.0
-                    twist.angular.z = -1 * rotatechange
-                    time.sleep(1)
-                    self.publisher_.publish(twist)
-                    time.sleep(1)
-                else:
-                    horizontally_centered = True
+                    #twist = Twist()
+                    #twist.linear.x = 0.0
+                    #twist.angular.z = -1 * rotatechange
+                    #time.sleep(1)
+                    #self.publisher_.publish(twist)
+                    #time.sleep(1)
+                #else:
+                    #horizontally_centered = True
 
-                self.stopbot()
+                #self.stopbot()
 
-            if horizontally_centered:
-                centered = True
-                twist = Twist()
-                twist.linear.x = 0.0
-                twist.angular.z = -1.90
-                for(int i = 0; i < 4; i++){
-                    self.publisher_.publish(twist)
-                    time.sleep(0.5)
+            #if horizontally_centered:
+                #centered = True
+                #twist = Twist()
+                #twist.linear.x = 0.0
+                #twist.angular.z = -1.90
+                #for(int i = 0; i < 4; i++){
+                    #self.publisher_.publish(twist)
+                    #time.sleep(0.5)
                 }
-                twist.angular.z = 0.0
-                self.publisher_.publish(twist)
-                time.sleep(4)
-            return True
+                #twist.angular.z = 0.0
+                #self.publisher_.publish(twist)
+                #time.sleep(4)
+            #return True
 
 
-    def targetting(self):
-        global message_sent
+    #def targetting(self):
+        #global message_sent
 
         # find the target
-        self.find_target()
+        #self.find_target()
 
         # centre the target
-        self.centre_target()
+        #self.centre_target()
 
         # ----------------------------- #
         # Now the bot can fire the ball #
         # ----------------------------- #
-        GPIO.setmode(GPIO.BCM)
+        #GPIO.setmode(GPIO.BCM)
 
 
         # Set the pin as an output 
-        GPIO.setup(DC_pin1, GPIO.OUT)
-        GPIO.setup(DC_pin2, GPIO.OUT)
+        #GPIO.setup(DC_pin1, GPIO.OUT)
+        #GPIO.setup(DC_pin2, GPIO.OUT)
 
-        GPIO.output(DC_pin1, GPIO.HIGH)
-        GPIO.output(DC_pin2, GPIO.HIGH)
+        #GPIO.output(DC_pin1, GPIO.HIGH)
+        #GPIO.output(DC_pin2, GPIO.HIGH)
 
         # Set the pin as an output 
-        GPIO.setup(servo_pin, GPIO.OUT)
+        #GPIO.setup(servo_pin, GPIO.OUT)
         # Initialise the servo to be controlled by pwm with 50 Hz frequency 
-        p = GPIO.PWM(servo_pin, 50)
+        #p = GPIO.PWM(servo_pin, 50)
         # Set servo to 90 degrees as it's starting position 
-        p.start(7.5)
-        p.ChangeDutyCycle(2.5) #loading position 
-        time.sleep(0.1) #delay .1 second 
-        p.ChangeDutyCycle(9.5) #firing position
-        time.sleep(1) #delay 1 second again
-        p.ChangeDutyCycle(7.5) #resting position 
-        time.sleep(1)
+        #p.start(7.5)
+        #p.ChangeDutyCycle(2.5) #loading position 
+        #time.sleep(0.1) #delay .1 second 
+        #p.ChangeDutyCycle(9.5) #firing position
+        #time.sleep(1) #delay 1 second again
+        #p.ChangeDutyCycle(7.5) #resting position 
+        #time.sleep(1)
 
-        message_sent = 'Done'
-        self.timer_callback()
+        #message_sent = 'Done'
+        #self.timer_callback()
         
-        GPIO.output(motorL_pin, GPIO.LOW)
-        GPIO.output(motorR_pin, GPIO.LOW)
-        p.stop()
-        GPIO.cleanup()
+        #GPIO.output(motorL_pin, GPIO.LOW)
+        #GPIO.output(motorR_pin, GPIO.LOW)
+        #p.stop()
+        #GPIO.cleanup()
 
 
 def main(args=None):
     rclpy.init(args=args)
 
     thermalcamera = ThermalCamera()
-    thermalcamera.targetting()
+    thermalcamera.find_target()
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
