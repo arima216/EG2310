@@ -36,9 +36,9 @@ class ThermalCamera(Node):
         # Set up publisher 'targeting_status' to communicate with wallfollower
         self.publisher_targeting = self.create_publisher(
             String, 'targeting_status', 10)
-        timer_period = 0.5  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.i = 0
+        #timer_period = 0.5  # seconds
+        #self.timer = self.create_timer(timer_period, self.timer_callback)
+        #self.i = 0
 
     # targeting_status callback function to stop wallfollower logic when target is detected
     def timer_callback(self):
@@ -47,13 +47,13 @@ class ThermalCamera(Node):
         msg.data = message_sent
         self.publisher_targeting.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
-        self.i += 1
+        #self.i += 1
 
-    def stopbot(self):
-        twist = Twist()
-        twist.linear.x = 0.0
-        twist.angular.z = 0.0
-        self.publisher_.publish(twist)
+    #def stopbot(self):
+       # twist = Twist()
+       # twist.linear.x = 0.0
+      #  twist.angular.z = 0.0
+       # self.publisher_.publish(twist)
 
     def find_target(self):
 
