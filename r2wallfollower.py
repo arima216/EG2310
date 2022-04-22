@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ast import Global
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
@@ -19,7 +20,7 @@ from geometry_msgs.msg import Twist
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import OccupancyGrid
-from std_msgs.msg import Float64MultiArray, String
+from std_msgs.msg import Float64MultiArray, String, Int8, Bool
 import numpy as np
 import tf2_ros
 from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
@@ -31,8 +32,8 @@ import threading
 import sched
 
 # constants
-rotatechange = 0.5
-speedchange = 0.15
+rotatechange = 1.2
+speedchange = 0.12
 back_angles = range(200, 320 + 1, 1)
 
 scanfile = 'lidar.txt'
@@ -42,6 +43,8 @@ occ_bins = [-1, 0, 100, 101]
 map_bg_color = 1
 isTargetDetected = False
 isDoneShooting = False
+isLoaded = False
+hasFired = False
 
 # To change before starting test
 stopping_time_in_seconds = 540  # 9 minutes
@@ -80,6 +83,7 @@ class AutoNav(Node):
 
         # create publisher for moving TurtleBot
         self.publisher_ = self.create_publisher(Twist, 'cmd_vel' , 10)
+        self.pewpew_ = self.create_publisher(String , 'pewpew' , 10) 
         # self.get_logger().info('Created publisher')
 
         # Create a subscriber
@@ -143,6 +147,13 @@ class AutoNav(Node):
             String,
             'nfc',
             self.nfc_callback,
+            10
+        )
+
+        self.thermal_subscription = self.create_subscription(
+            Int8,
+            'ir_cam',
+            self.thermal_callback,
             10
         )
 
@@ -220,9 +231,96 @@ class AutoNav(Node):
     # function to rotate the TurtleBot
 
     def nfc_callback(self, msg):
-        if self.closure == False:
+        print('NFC CALLING BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACK!!!')
+        global isLoaded, hasFired
+
+        if isLoaded == False and hasFired == False:
+            print('isLoaded False')
             self.stopbot()
-            time.sleep(30)
+            time.sleep(10)
+            isLoaded = True
+        else:
+            print('isLoaded True')
+
+
+        #if self.closure == False and isLoaded == False:
+        #    self.stopbot()
+        #    time.sleep(15)
+        #    isLoaded = True
+        #else:
+        #    return
+
+    def thermal_callback(self, msg):
+        # ----------------------------------------------------------- #
+        # Adjust the servo and robot until high temp is in the centre #
+        # ----------------------------------------------------------- #
+
+        print('FIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIRING')
+        # Centre the target in the robot's vision
+        horizontally_centered = True
+        centered = False
+
+        global isLoaded, hasFired
+        if isLoaded == True and hasFired == False:
+            while not centered:
+                target_col = 0
+
+                # UNUSED #####################
+                """
+                if not horizontally_centered:
+                    # centre max value between row 3 and 4
+                    if target_col < 3:
+                        # spin it anti-clockwise
+                        twist = Twist()
+                        twist.linear.x = 0.0
+                        twist.angular.z = rotatechange
+                        time.sleep(1)
+                        self.publisher_.publish(twist)
+                        time.sleep(1)
+                        horizontally_centered = True
+                    elif target_col > 4:
+                        # spin it clockwise
+                        twist = Twist()
+                        twist.linear.x = 0.0
+                        twist.angular.z = -1 * rotatechange
+                        time.sleep(1)
+                        self.publisher_.publish(twist)
+                        time.sleep(1)
+                        horizontally_centered = True
+                    else:
+                        horizontally_centered = True
+
+                    self.stopbot()
+                    print('check 1')
+
+                # UNUSED END ####################
+                """
+
+                if horizontally_centered == True:
+                    centered = True
+                    twist = Twist()
+                    twist.linear.x = 0.0
+                    twist.angular.z = -0.5
+                    self.publisher_.publish(twist)
+                    print('check 2')
+                    time.sleep(2)
+                    twist.angular.z = 0.0
+                    self.publisher_.publish(twist)
+                    print('check 3')
+                    time.sleep(4)
+                    print('check4')
+
+            print('check5')
+            pew = String()
+            pew.data = 'pewpew'
+            self.pewpew_.publish(pew)
+            print('check6')
+            print('pew pew!')
+            time.sleep(15)
+            isLoaded = False
+            hasFired = True
+
+
         else:
             return
 
@@ -294,11 +392,11 @@ class AutoNav(Node):
         # Logic for following the wall
         # >d means no wall detected by that laser beam
         # <d means a wall was detected by that laser beam
-        d = 0.45  # wall distance from the robot. It will follow the right wall and maintain this distance
+        d = 0.45  # wall distance from the robot. It will follow the right wall and maintain this distance. Default d = 0.45
         # Set turning speeds (to the left) in rad/s
 
         # These values were determined by trial and error.
-        self.turning_speed_wf_fast = 1.3  # Fast turn ideal = 1.0
+        self.turning_speed_wf_fast = 1.0  # Fast turn ideal = 1.0
         self.turning_speed_wf_slow = 0.50  # Slow turn = 0.50
         # Set movement speed
         self.forward_speed = speedchange
@@ -537,25 +635,20 @@ class AutoNav(Node):
 
 
 def main(args=None):
-    rclpy.init(args=args)
+    try:
+        rclpy.init(args=args)
 
-    auto_nav = AutoNav()
-    auto_nav.mover()
+        auto_nav = AutoNav() 
+        auto_nav.mover()
 
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    auto_nav.destroy_node()
-    rclpy.shutdown()
+        # Destroy the node explicitly
+        # (optional - otherwise it will be done automatically
+        # when the garbage collector destroys the node object)
+        auto_nav.destroy_node()
+        rclpy.shutdown()
+    
+    except KeyboardInterrupt:
+        auto_nav.stopbot()
 
 if __name__ == '__main__':
     main()
-
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-#Phase 1
-#First scan
-
-#def Phase1():
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
